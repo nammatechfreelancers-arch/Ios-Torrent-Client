@@ -13,7 +13,7 @@
     <key>CFBundleName</key>
     <string>$(PRODUCT_NAME)</string>
     <key>CFBundlePackageType</key>
-    <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+    <string>XPC!</string>
     <key>CFBundleShortVersionString</key>
     <string>1.0</string>
     <key>CFBundleVersion</key>
@@ -22,10 +22,18 @@
     <string>18.0</string>
     <key>NSExtension</key>
     <dict>
+        <key>NSExtensionAttributes</key>
+        <dict>
+            <key>EXAppExtensionAttributes</key>
+            <dict>
+                <key>EXExtensionPointIdentifier</key>
+                <string>com.apple.widgetkit-extension</string>
+            </dict>
+        </dict>
         <key>NSExtensionPointIdentifier</key>
         <string>com.apple.widgetkit-extension</string>
         <key>NSExtensionPrincipalClass</key>
-        <string>$(PRODUCT_MODULE_NAME).NammaTorrentWidgetBundle</string>
+        <string>NammaTorrentWidgetBundle</string>
     </dict>
 </dict>
 </plist>
