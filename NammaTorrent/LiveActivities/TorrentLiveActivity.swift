@@ -78,7 +78,7 @@ private struct LockScreenView: View {
 @available(iOS 16.2, *)
 public actor LiveActivityManager {
     public static let shared = LiveActivityManager()
-    private var activities: [String: Activity<TorrentActivityAttributes>] = [:]
+    private var activityIDs: Set<String> = []
     private init() {}
 
     public func start(for torrent: TorrentModel) async {
@@ -94,13 +94,15 @@ public actor LiveActivityManager {
             status: torrent.status.rawValue,
             health: torrent.health
         )
-        if let activity = try? Activity.request(attributes: attrs, content: .init(state: state, staleDate: nil)) {
-            activities[torrent.id.uuidString] = activity
+        if let activity = try? Activity.request(
+            attributes: attrs,
+            content: .init(state: state, staleDate: nil)
+        ) {
+            activityIDs.insert(activity.id)
         }
     }
 
     public func update(for torrent: TorrentModel) async {
-        guard let activity = activities[torrent.id.uuidString] else { return }
         let state = TorrentActivityAttributes.ContentState(
             torrentName: torrent.name,
             progress: torrent.progress,
@@ -111,13 +113,17 @@ public actor LiveActivityManager {
             status: torrent.status.rawValue,
             health: torrent.health
         )
-        await activity.update(.init(state: state, staleDate: nil))
+        let content = ActivityContent(state: state, staleDate: nil)
+        for activity in Activity<TorrentActivityAttributes>.activities where activityIDs.contains(activity.id) {
+            await activity.update(content)
+        }
     }
 
     public func end(for torrentID: UUID) async {
-        guard let activity = activities[torrentID.uuidString] else { return }
-        await activity.end(nil, dismissalPolicy: .immediate)
-        activities.removeValue(forKey: torrentID.uuidString)
+        for activity in Activity<TorrentActivityAttributes>.activities where activityIDs.contains(activity.id) {
+            activityIDs.remove(activity.id)
+            await activity.end(nil, dismissalPolicy: .immediate)
+        }
     }
 }
 #endif

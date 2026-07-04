@@ -183,10 +183,12 @@ public actor TorrentEngine {
             let pm = session.pieceManager
 
             await conn.setOnPieceReceived { [weak self] index, begin, data in
-                Task { await self?.handleBlock(sessionID: sessionID, pieceIndex: index, begin: begin, data: data, pm: pm) }
+                guard let self else { return }
+                Task { await self.handleBlock(sessionID: sessionID, pieceIndex: index, begin: begin, data: data, pm: pm) }
             }
             await conn.setOnDisconnected { [weak self] in
-                Task { await self?.removePeer(key: key, sessionID: sessionID) }
+                guard let self else { return }
+                Task { await self.removePeer(key: key, sessionID: sessionID) }
             }
 
             session.peers[key] = conn
@@ -297,13 +299,11 @@ public actor TorrentEngine {
     }
 
     private func notifyUpdate(id: UUID) async {
-        let d = delegate
-        await MainActor.run { d?.engineDidUpdateTorrent(id: id) }
+        await delegate?.engineDidUpdateTorrent(id: id)
     }
 
     private func notifyComplete(id: UUID) async {
-        let d = delegate
-        await MainActor.run { d?.engineDidCompleteTorrent(id: id) }
+        await delegate?.engineDidCompleteTorrent(id: id)
     }
 
     // MARK: - Public Queries
