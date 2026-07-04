@@ -21,7 +21,7 @@ public enum TorrentEngineError: Error, LocalizedError {
 
 // MARK: - Engine Delegate
 @MainActor
-public protocol TorrentEngineDelegate: AnyObject {
+public protocol TorrentEngineDelegate: AnyObject, Sendable {
     func engineDidUpdateTorrent(id: UUID)
     func engineDidCompleteTorrent(id: UUID)
     func engineDidFailTorrent(id: UUID, error: Error)
