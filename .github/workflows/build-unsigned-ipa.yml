@@ -1,0 +1,65 @@
+name: Build unsigned IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    name: Build unsigned IPA
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build app for device without signing
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project NammaTorrent.xcodeproj \
+            -scheme NammaTorrent \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination generic/platform=iOS \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Verify embedded extensions
+        run: |
+          set -euo pipefail
+          APP_PATH="build/DerivedData/Build/Products/Release-iphoneos/NammaTorrent.app"
+          test -d "$APP_PATH/PlugIns/NammaTorrentWidget.appex"
+          test -d "$APP_PATH/PlugIns/NammaTorrentShare.appex"
+          find "$APP_PATH/PlugIns" -maxdepth 1 -type d -name "*.appex" -print
+
+      - name: Package IPA
+        run: |
+          set -euo pipefail
+          APP_PATH="build/DerivedData/Build/Products/Release-iphoneos/NammaTorrent.app"
+          test -d "$APP_PATH"
+          rm -rf Payload NammaTorrent-unsigned.ipa
+          mkdir Payload
+          cp -R "$APP_PATH" Payload/
+          /usr/bin/zip -qry NammaTorrent-unsigned.ipa Payload
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NammaTorrent-unsigned-ipa
+          path: NammaTorrent-unsigned.ipa

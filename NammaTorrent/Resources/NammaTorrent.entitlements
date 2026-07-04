@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- App Groups — shared UserDefaults with Share Extension and Widget Extension -->
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>group.com.nammatorrrent</string>
+    </array>
+
+    <!-- Push Notifications (for Live Activities) -->
+    <key>com.apple.developer.usernotifications.communication</key>
+    <true/>
+
+    <!-- Live Activities -->
+    <key>com.apple.developer.live-activity</key>
+    <true/>
+
+    <!-- Network extensions — outbound TCP/UDP for peer connections -->
+    <key>com.apple.developer.networking.networkextension</key>
+    <array>
+        <string>app-proxy-provider</string>
+    </array>
+
+    <!-- Files access -->
+    <key>com.apple.developer.ubiquity-container-identifiers</key>
+    <array/>
+</dict>
+</plist>

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>NammaTorrent</string>
+    <key>CFBundleDisplayName</key>
+    <string>NammaTorrent</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.nammatorrrent</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>MinimumOSVersion</key>
+    <string>18.0</string>
+    <key>UILaunchScreen</key>
+    <dict/>
+
+    <!-- Live Activities / Dynamic Island -->
+    <key>NSSupportsLiveActivities</key>
+    <true/>
+
+    <!-- Supported orientations -->
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+
+    <!-- File sharing — makes Downloads folder visible in Files app -->
+    <key>UIFileSharingEnabled</key>
+    <true/>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
+
+    <!-- Open .torrent files and magnet links -->
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>BitTorrent File</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>org.bittorrent.torrent</string>
+                <string>public.data</string>
+            </array>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+        </dict>
+    </array>
+
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>Magnet Link</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>magnet</string>
+            </array>
+        </dict>
+    </array>
+
+    <!-- Background modes -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>fetch</string>
+        <string>processing</string>
+    </array>
+
+    <!-- Background task identifiers -->
+    <key>BGTaskSchedulerPermittedIdentifiers</key>
+    <array>
+        <string>com.nammatorrrent.refresh</string>
+    </array>
+
+    <!-- Network usage descriptions -->
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>NammaTorrent uses the local network for peer discovery (LSD).</string>
+
+    <!-- Bonjour services for LSD -->
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_bittorrent._tcp</string>
+    </array>
+
+    <!-- App Transport Security — allow arbitrary loads for tracker/peer connections -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+    </dict>
+</dict>
+</plist>
