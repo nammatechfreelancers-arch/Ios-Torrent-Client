@@ -23,9 +23,12 @@ public final class TorrentService {
         defer { isLoading = false }
         do {
             torrents = try await storage.loadTorrents()
-            // Re-register all torrents with engine
-            for torrent in torrents where torrent.status == .downloading {
-                await resumeTorrent(torrent)
+            // Re-register ALL torrents with engine, then resume active ones
+            for torrent in torrents {
+                await registerWithEngine(torrent)
+                if torrent.status == .downloading || torrent.status == .metadata {
+                    await startDownload(torrent)
+                }
             }
         } catch {
             self.error = error
@@ -40,24 +43,24 @@ public final class TorrentService {
 
     // MARK: - Add via Magnet
     public func addMagnet(_ magnetLink: String) async throws {
-        let parsed = try MagnetParser.parse(magnetLink)
+        let trimmed = magnetLink.trimmingCharacters(in: .whitespacesAndNewlines)
+        let parsed = try MagnetParser.parse(trimmed)
         guard !torrents.contains(where: { $0.infoHash == parsed.infoHash }) else {
             throw TorrentEngineError.alreadyExists
         }
 
+        let savePath = await storage.torrentDirectory(for: parsed.infoHash)
         var torrent = TorrentModel(
             infoHash: parsed.infoHash,
             name: parsed.displayName,
-            magnetLink: magnetLink,
+            magnetLink: trimmed,
             status: .metadata,
-            savePath: await storage.torrentDirectory(for: parsed.infoHash).path
+            savePath: savePath.path
         )
         torrent.trackers = parsed.trackers.map { TorrentTracker(url: $0) }
         torrents.append(torrent)
         try? await storage.saveTorrents(torrents)
 
-        // Start with no pieces yet — metadata fetch would populate these
-        // For now, start engine with empty piece info (metadata mode)
         try await engine.addTorrent(
             id: torrent.id,
             infoHash: parsed.infoHash,
@@ -65,7 +68,7 @@ public final class TorrentService {
             pieceLength: 0,
             totalSize: 0,
             pieceHashes: [],
-            savePath: await storage.torrentDirectory(for: parsed.infoHash)
+            savePath: savePath
         )
         await engine.start(id: torrent.id, trackerURLs: parsed.trackers)
         updateStatus(id: torrent.id, status: .downloading)
@@ -117,7 +120,9 @@ public final class TorrentService {
 
     public func resume(id: UUID) async {
         guard let torrent = torrents.first(where: { $0.id == id }) else { return }
-        await resumeTorrent(torrent)
+        // Always re-register before starting — session may be gone after app restart
+        await registerWithEngine(torrent)
+        await startDownload(torrent)
     }
 
     public func remove(id: UUID, deleteFiles: Bool) async {
@@ -145,7 +150,9 @@ public final class TorrentService {
         for i in torrents.indices {
             let id = torrents[i].id
             let progress = await engine.progress(for: id)
+            let peerCount = await engine.peerCount(for: id)
             torrents[i].progress = progress
+            torrents[i].peerCount = peerCount
             torrents[i].downloadedSize = Int64(Double(torrents[i].totalSize) * progress)
             if progress >= 1.0 && torrents[i].status == .downloading {
                 torrents[i].status = .completed
@@ -154,8 +161,39 @@ public final class TorrentService {
         }
     }
 
-    // MARK: - Helpers
-    private func resumeTorrent(_ torrent: TorrentModel) async {
+    // MARK: - Private Helpers
+
+    /// Registers a torrent with the engine, restoring piece info from saved .torrent file if available.
+    private func registerWithEngine(_ torrent: TorrentModel) async {
+        let savePath = await storage.torrentDirectory(for: torrent.infoHash)
+
+        // Try to load saved .torrent file for full piece info
+        if let savedData = try? await storage.loadTorrentFile(infoHash: torrent.infoHash),
+           let info = try? TorrentParser.parse(data: savedData) {
+            try? await engine.addTorrent(
+                id: torrent.id,
+                infoHash: torrent.infoHash,
+                pieceCount: info.pieceCount,
+                pieceLength: info.pieceLength,
+                totalSize: info.totalSize,
+                pieceHashes: info.pieceHashes,
+                savePath: savePath
+            )
+        } else {
+            // Magnet / no metadata yet — register with empty pieces
+            try? await engine.addTorrent(
+                id: torrent.id,
+                infoHash: torrent.infoHash,
+                pieceCount: 0,
+                pieceLength: 0,
+                totalSize: torrent.totalSize,
+                pieceHashes: [],
+                savePath: savePath
+            )
+        }
+    }
+
+    private func startDownload(_ torrent: TorrentModel) async {
         let trackerURLs = torrent.trackers.map { $0.url }
         await engine.start(id: torrent.id, trackerURLs: trackerURLs)
         updateStatus(id: torrent.id, status: .downloading)

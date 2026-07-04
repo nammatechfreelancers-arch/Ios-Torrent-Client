@@ -327,7 +327,7 @@ public actor TorrentEngine {
         return await session.pieceManager.allPieces()
     }
 
-    public func peerCount(for id: UUID) -> Int {
+    public func peerCount(for id: UUID) async -> Int {
         sessions[id]?.peers.count ?? 0
     }
 

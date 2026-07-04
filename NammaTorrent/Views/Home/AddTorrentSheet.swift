@@ -6,7 +6,11 @@ public struct AddTorrentSheet: View {
     @Bindable var vm: HomeViewModel
     @State private var magnetText = ""
     @State private var showFilePicker = false
+    @State private var isAdding = false
     @Environment(\.dismiss) private var dismiss
+
+    private var magnetTrimmed: String { magnetText.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private var isMagnetValid: Bool { magnetTrimmed.lowercased().hasPrefix("magnet:?") }
 
     public var body: some View {
         NavigationStack {
@@ -16,25 +20,34 @@ public struct AddTorrentSheet: View {
                         .lineLimit(3...6)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
-                    Button("Add Magnet") {
+                        .keyboardType(.URL)
+
+                    Button {
+                        guard isMagnetValid, !isAdding else { return }
+                        isAdding = true
                         Task {
-                            await vm.addMagnet(magnetText)
-                            dismiss()
+                            await vm.addMagnet(magnetTrimmed)
+                            isAdding = false
+                            if vm.error == nil { dismiss() }
+                        }
+                    } label: {
+                        HStack {
+                            Text("Add Magnet")
+                            if isAdding { Spacer(); ProgressView() }
                         }
                     }
-                    .disabled(magnetText.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(!isMagnetValid || isAdding)
+
+                    Button("Paste from Clipboard") {
+                        if let str = UIPasteboard.general.string {
+                            magnetText = str.trimmingCharacters(in: .whitespacesAndNewlines)
+                        }
+                    }
+                    .foregroundStyle(.secondary)
                 }
 
                 Section(".torrent File") {
                     Button("Browse Files…") { showFilePicker = true }
-                }
-
-                Section {
-                    Button("Paste from Clipboard") {
-                        if let str = UIPasteboard.general.string {
-                            magnetText = str
-                        }
-                    }
                 }
             }
             .navigationTitle("Add Torrent")
@@ -63,5 +76,6 @@ public struct AddTorrentSheet: View {
             }
         }
         .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 }

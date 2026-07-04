@@ -47,6 +47,11 @@ public actor StorageService {
         try data.write(to: url, options: .atomic)
     }
 
+    public func loadTorrentFile(infoHash: String) -> Data? {
+        let url = downloadsDirectory().appendingPathComponent("\(infoHash).torrent")
+        return try? Data(contentsOf: url)
+    }
+
     public func torrentFileURL(for infoHash: String) -> URL? {
         let url = downloadsDirectory().appendingPathComponent("\(infoHash).torrent")
         return FileManager.default.fileExists(atPath: url.path) ? url : nil
