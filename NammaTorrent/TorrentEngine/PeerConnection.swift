@@ -5,7 +5,7 @@ import Foundation
 import Network
 
 // MARK: - Peer Wire Message Types
-public enum PeerMessageType: UInt8 {
+public enum PeerMessageType: UInt8, Sendable {
     case choke          = 0
     case unchoke        = 1
     case interested     = 2

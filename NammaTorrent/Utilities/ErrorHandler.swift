@@ -19,7 +19,7 @@ public struct AppError: LocalizedError, Identifiable {
         switch error {
         case let e as TorrentEngineError:
             return AppError(title: "Torrent Error", message: e.localizedDescription)
-        case let e as TorrentParseError:
+        case let e as TorrentParserError:
             return AppError(title: "Parse Error", message: e.localizedDescription, isRecoverable: false)
         case let e as TrackerError:
             return AppError(title: "Tracker Error", message: e.localizedDescription)

@@ -109,8 +109,8 @@ public actor TorrentEngine {
 
         let pm = session.pieceManager
         let downloaded = await pm.verifiedCount
-        let pieceLen = await pm.pieceLength
-        let total = await pm.totalSize
+        let pieceLen = pm.pieceLength
+        let total = pm.totalSize
         let left = total - Int64(downloaded * pieceLen)
 
         // Tracker announce
@@ -250,7 +250,7 @@ public actor TorrentEngine {
     // MARK: - Disk I/O
     private func writeBlock(session: TorrentSession, pieceIndex: Int, begin: Int, data: Data) async {
         let pm = session.pieceManager
-        let pieceLen = await pm.pieceLength
+        let pieceLen = pm.pieceLength
         let offset = Int64(pieceIndex) * Int64(pieceLen) + Int64(begin)
         let path = session.downloadPath.appendingPathComponent("data.bin")
 
@@ -265,7 +265,7 @@ public actor TorrentEngine {
 
     private func readPiece(session: TorrentSession, index: Int, size: Int) async -> Data? {
         let pm = session.pieceManager
-        let pieceLen = await pm.pieceLength
+        let pieceLen = pm.pieceLength
         let offset = Int64(index) * Int64(pieceLen)
         let path = session.downloadPath.appendingPathComponent("data.bin")
         guard let fh = try? FileHandle(forReadingFrom: path) else { return nil }
@@ -297,17 +297,13 @@ public actor TorrentEngine {
     }
 
     private func notifyUpdate(id: UUID) async {
-        let delegate = delegate
-        await MainActor.run {
-            delegate?.engineDidUpdateTorrent(id: id)
-        }
+        let d = delegate
+        await MainActor.run { d?.engineDidUpdateTorrent(id: id) }
     }
 
     private func notifyComplete(id: UUID) async {
-        let delegate = delegate
-        await MainActor.run {
-            delegate?.engineDidCompleteTorrent(id: id)
-        }
+        let d = delegate
+        await MainActor.run { d?.engineDidCompleteTorrent(id: id) }
     }
 
     // MARK: - Public Queries

@@ -44,13 +44,13 @@ public struct PeerMessage: Sendable {
 
     // MARK: - Factory methods
     public static func have(pieceIndex: Int) -> PeerMessage {
-        var p = Data(4)
+        var p = Data(count: 4)
         p.writeUInt32(UInt32(pieceIndex), at: 0)
         return PeerMessage(type: .have, payload: p)
     }
 
     public static func request(index: Int, begin: Int, length: Int) -> PeerMessage {
-        var p = Data(12)
+        var p = Data(count: 12)
         p.writeUInt32(UInt32(index), at: 0)
         p.writeUInt32(UInt32(begin), at: 4)
         p.writeUInt32(UInt32(length), at: 8)
@@ -58,7 +58,7 @@ public struct PeerMessage: Sendable {
     }
 
     public static func cancel(index: Int, begin: Int, length: Int) -> PeerMessage {
-        var p = Data(12)
+        var p = Data(count: 12)
         p.writeUInt32(UInt32(index), at: 0)
         p.writeUInt32(UInt32(begin), at: 4)
         p.writeUInt32(UInt32(length), at: 8)
@@ -130,7 +130,7 @@ public extension Data {
 // MARK: - Data Write Helpers
 extension Data {
     mutating func writeUInt32(_ value: UInt32, at offset: Int) {
-        let bytes = withUnsafeBytes(of: value.bigEndian, Array.init)
+        let bytes = Swift.withUnsafeBytes(of: value.bigEndian, Array.init)
         for (i, b) in bytes.enumerated() { self[offset + i] = b }
     }
 

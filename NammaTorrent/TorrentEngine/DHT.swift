@@ -83,7 +83,7 @@ public actor DHTNode {
 
     private func closestNodes(to target: Data, count: Int) -> [DHTNodeInfo] {
         routingTable
-            .sorted { xor($0.id, target) < xor($1.id, target) }
+            .sorted { self.xor($0.id, target).lexicographicallyPrecedes(self.xor($1.id, target)) }
             .prefix(count).map { $0 }
     }
 
