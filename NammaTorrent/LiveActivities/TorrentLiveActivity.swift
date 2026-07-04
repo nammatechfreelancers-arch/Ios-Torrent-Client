@@ -5,6 +5,8 @@ import WidgetKit
 
 @available(iOS 16.2, *)
 public struct TorrentLiveActivity: Widget {
+    public init() {}
+
     public var body: some WidgetConfiguration {
         ActivityConfiguration(for: TorrentActivityAttributes.self) { context in
             // Lock screen / banner

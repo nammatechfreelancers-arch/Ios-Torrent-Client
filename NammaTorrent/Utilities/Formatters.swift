@@ -40,13 +40,13 @@ public enum Formatters {
     }
 
     // MARK: - Date
-    private static let relativeDateFormatter: RelativeDateTimeFormatter = {
+    private static func makeRelativeDateFormatter() -> RelativeDateTimeFormatter {
         let f = RelativeDateTimeFormatter()
         f.unitsStyle = .abbreviated
         return f
-    }()
+    }
 
     public static func relativeDate(_ date: Date) -> String {
-        relativeDateFormatter.localizedString(for: date, relativeTo: Date())
+        makeRelativeDateFormatter().localizedString(for: date, relativeTo: Date())
     }
 }

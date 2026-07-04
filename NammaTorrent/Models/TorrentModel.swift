@@ -167,6 +167,39 @@ public struct TorrentModel: Identifiable, Codable, Sendable, Hashable {
         // downloadSpeed and uploadSpeed are NOT persisted
     }
 
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.infoHash = try container.decode(String.self, forKey: .infoHash)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.magnetLink = try container.decodeIfPresent(String.self, forKey: .magnetLink)
+        self.torrentFilePath = try container.decodeIfPresent(String.self, forKey: .torrentFilePath)
+        self.status = try container.decode(TorrentStatus.self, forKey: .status)
+        self.priority = try container.decode(TorrentPriority.self, forKey: .priority)
+        self.totalSize = try container.decode(Int64.self, forKey: .totalSize)
+        self.downloadedSize = try container.decode(Int64.self, forKey: .downloadedSize)
+        self.uploadedSize = try container.decode(Int64.self, forKey: .uploadedSize)
+        self.downloadSpeed = 0
+        self.uploadSpeed = 0
+        self.progress = try container.decode(Double.self, forKey: .progress)
+        self.seedCount = try container.decode(Int.self, forKey: .seedCount)
+        self.peerCount = try container.decode(Int.self, forKey: .peerCount)
+        self.leecherCount = try container.decode(Int.self, forKey: .leecherCount)
+        self.eta = try container.decode(TimeInterval.self, forKey: .eta)
+        self.addedDate = try container.decode(Date.self, forKey: .addedDate)
+        self.completedDate = try container.decodeIfPresent(Date.self, forKey: .completedDate)
+        self.lastActiveDate = try container.decode(Date.self, forKey: .lastActiveDate)
+        self.savePath = try container.decode(String.self, forKey: .savePath)
+        self.files = try container.decode([TorrentFile].self, forKey: .files)
+        self.health = try container.decode(Double.self, forKey: .health)
+        self.isSequential = try container.decode(Bool.self, forKey: .isSequential)
+        self.isPrivate = try container.decode(Bool.self, forKey: .isPrivate)
+        self.hasMetadata = try container.decode(Bool.self, forKey: .hasMetadata)
+        self.trackers = try container.decode([TorrentTracker].self, forKey: .trackers)
+        self.errorMessage = try container.decodeIfPresent(String.self, forKey: .errorMessage)
+        self.thumbnailPath = try container.decodeIfPresent(String.self, forKey: .thumbnailPath)
+    }
+
     public var remainingSize: Int64 { max(0, totalSize - downloadedSize) }
     public var isActive: Bool { status == .downloading || status == .seeding }
     public var isFinished: Bool { status == .completed || progress >= 1.0 }
