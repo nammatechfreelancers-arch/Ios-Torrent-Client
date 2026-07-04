@@ -21,31 +21,54 @@ final class ShareViewController: UIViewController {
                 // .torrent file
                 if provider.hasItemConformingToTypeIdentifier(UTType.data.identifier) {
                     provider.loadItem(forTypeIdentifier: UTType.data.identifier) { [weak self] data, _ in
-                        if let url = data as? URL, url.pathExtension.lowercased() == "torrent",
-                           let torrentData = try? Data(contentsOf: url) {
-                            self?.saveTorrentFile(torrentData)
+                        let torrentData: Data?
+                        if let url = data as? URL, url.pathExtension.lowercased() == "torrent" {
+                            torrentData = try? Data(contentsOf: url)
+                        } else {
+                            torrentData = nil
                         }
-                        self?.done()
+                        Task { @MainActor in
+                            if let torrentData {
+                                self?.saveTorrentFile(torrentData)
+                            }
+                            self?.done()
+                        }
                     }
                     return
                 }
                 // Magnet link via URL
                 if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
                     provider.loadItem(forTypeIdentifier: UTType.url.identifier) { [weak self] data, _ in
+                        let magnetLink: String?
                         if let url = data as? URL, url.scheme == "magnet" {
-                            self?.saveMagnetLink(url.absoluteString)
+                            magnetLink = url.absoluteString
+                        } else {
+                            magnetLink = nil
                         }
-                        self?.done()
+                        Task { @MainActor in
+                            if let magnetLink {
+                                self?.saveMagnetLink(magnetLink)
+                            }
+                            self?.done()
+                        }
                     }
                     return
                 }
                 // Plain text magnet
                 if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
                     provider.loadItem(forTypeIdentifier: UTType.plainText.identifier) { [weak self] data, _ in
+                        let magnetLink: String?
                         if let text = data as? String, text.hasPrefix("magnet:?") {
-                            self?.saveMagnetLink(text)
+                            magnetLink = text
+                        } else {
+                            magnetLink = nil
                         }
-                        self?.done()
+                        Task { @MainActor in
+                            if let magnetLink {
+                                self?.saveMagnetLink(magnetLink)
+                            }
+                            self?.done()
+                        }
                     }
                     return
                 }
