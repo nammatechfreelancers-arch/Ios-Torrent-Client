@@ -159,7 +159,7 @@ public struct TorrentModel: Identifiable, Codable, Sendable, Hashable {
     // Coding keys — exclude runtime-only fields from persistence
     enum CodingKeys: String, CodingKey {
         case id, infoHash, name, magnetLink, torrentFilePath, status, priority
-        case totalSize, downloadedSize, uploadedSize, uploadedSize
+        case totalSize, downloadedSize, uploadedSize
         case progress, seedCount, peerCount, leecherCount, eta
         case addedDate, completedDate, lastActiveDate
         case savePath, files, health, isSequential, isPrivate, hasMetadata
