@@ -64,6 +64,10 @@ jobs:
           rm -rf Payload NammaTorrent-unsigned.ipa
           mkdir Payload
           cp -R "$APP_PATH" Payload/
+          # Remove app extensions — Sideloadly v0.60 crashes on unsigned extensions
+          # and installd rejects unsigned extension placeholders on-device.
+          # Extensions require a paid developer account to sideload; strip them.
+          rm -rf Payload/NammaTorrent.app/PlugIns
           /usr/bin/zip -qry NammaTorrent-unsigned.ipa Payload
 
       - name: Upload IPA artifact

@@ -71,6 +71,7 @@ targets:
         APPLICATION_EXTENSION_API_ONLY: "YES"
         SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) APP_EXTENSION"
         SKIP_INSTALL: "YES"
+        PRODUCT_BUNDLE_PACKAGE_TYPE: XPC!
 
   NammaTorrentShare:
     type: app-extension
