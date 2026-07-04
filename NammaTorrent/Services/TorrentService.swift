@@ -47,7 +47,7 @@ public final class TorrentService {
 
         var torrent = TorrentModel(
             infoHash: parsed.infoHash,
-            name: parsed.displayName ?? parsed.infoHash,
+            name: parsed.displayName,
             magnetLink: magnetLink,
             status: .metadata,
             savePath: await storage.torrentDirectory(for: parsed.infoHash).path
@@ -90,7 +90,7 @@ public final class TorrentService {
             files: info.files,
             isPrivate: info.isPrivate,
             hasMetadata: true,
-            trackers: info.trackers.map { TorrentTracker(url: $0) }
+            trackers: info.trackers
         )
         torrents.append(torrent)
         try? await storage.saveTorrents(torrents)
@@ -104,7 +104,7 @@ public final class TorrentService {
             pieceHashes: info.pieceHashes,
             savePath: savePath
         )
-        await engine.start(id: torrent.id, trackerURLs: info.trackers)
+        await engine.start(id: torrent.id, trackerURLs: info.trackers.map { $0.url })
         updateStatus(id: torrent.id, status: .downloading)
     }
 

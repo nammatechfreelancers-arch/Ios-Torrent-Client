@@ -28,6 +28,7 @@ public struct ParsedTorrent: Sendable {
     public let totalSize: Int64
     public let pieceLength: Int
     public let pieceCount: Int
+    public let pieceHashes: [Data]
     public let files: [TorrentFile]
     public let trackers: [TorrentTracker]
     public let isPrivate: Bool
@@ -71,7 +72,11 @@ public enum TorrentParser {
             totalSize = length
         }
 
-        let pieceCount = Int(ceil(Double(totalSize) / Double(pieceLength)))
+        let pieceHashes = stride(from: 0, to: piecesData.count, by: 20).compactMap { offset -> Data? in
+            guard offset + 20 <= piecesData.count else { return nil }
+            return piecesData.subdata(in: offset..<(offset + 20))
+        }
+        let pieceCount = pieceHashes.count
 
         // Parse trackers
         var trackers: [TorrentTracker] = []
@@ -101,6 +106,7 @@ public enum TorrentParser {
             totalSize: totalSize,
             pieceLength: Int(pieceLength),
             pieceCount: pieceCount,
+            pieceHashes: pieceHashes,
             files: files,
             trackers: trackers,
             isPrivate: isPrivate,

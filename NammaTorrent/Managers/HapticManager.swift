@@ -1,6 +1,7 @@
 // HapticManager.swift — Haptic feedback wrapper
 import UIKit
 
+@MainActor
 public final class HapticManager: @unchecked Sendable {
     public static let shared = HapticManager()
     private init() {}

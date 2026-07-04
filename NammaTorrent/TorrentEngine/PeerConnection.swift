@@ -130,9 +130,9 @@ public actor PeerConnection {
                 return
             }
             // Verify info hash at bytes 28–48
-            let receivedHash = data[28..<48]
+            let receivedHash = Data(data[28..<48])
             Task {
-                guard receivedHash == await self.infoHash else {
+                guard await self.matchesInfoHash(receivedHash) else {
                     continuation.resume(throwing: PeerConnectionError.handshakeFailed)
                     return
                 }
@@ -144,6 +144,7 @@ public actor PeerConnection {
     }
 
     private func setConnected(_ value: Bool) { isConnected = value }
+    private func matchesInfoHash(_ receivedHash: Data) -> Bool { receivedHash == infoHash }
 
     // MARK: - Message Loop
     private func startReceiveLoop() {
@@ -152,7 +153,8 @@ public actor PeerConnection {
 
     private func receiveNextMessage() {
         // Read 4-byte length prefix
-        connection?.receive(minimumIncompleteLength: 4, maximumLength: 4) { [weak self] data, _, _, error in
+        guard let connection else { return }
+        connection.receive(minimumIncompleteLength: 4, maximumLength: 4) { [weak self] data, _, _, error in
             guard let self, error == nil, let data else { return }
             let length = Int(data[0]) << 24 | Int(data[1]) << 16 | Int(data[2]) << 8 | Int(data[3])
             if length == 0 {
@@ -160,7 +162,7 @@ public actor PeerConnection {
                 Task { await self.receiveNextMessage() }
                 return
             }
-            self.connection?.receive(minimumIncompleteLength: length, maximumLength: length) { [weak self] msgData, _, _, error in
+            connection.receive(minimumIncompleteLength: length, maximumLength: length) { [weak self] msgData, _, _, error in
                 guard let self, error == nil, let msgData else { return }
                 Task {
                     await self.handleMessage(msgData)

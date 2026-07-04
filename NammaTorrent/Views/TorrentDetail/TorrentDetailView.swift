@@ -57,7 +57,7 @@ public struct TorrentDetailView: View {
 
                         switch vm.selectedTab {
                         case 0: FilesTabView(files: torrent.files)
-                        case 1: PeersTabView(peers: torrent.peers)
+                        case 1: PeersTabView(peers: [])
                         case 2: TrackersTabView(trackers: torrent.trackers)
                         case 3: PiecesTabView(pieces: vm.pieces)
                         default: EmptyView()

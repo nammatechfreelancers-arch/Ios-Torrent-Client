@@ -220,12 +220,10 @@ public actor TorrentEngine {
         if await pm.verify(index: pieceIndex, data: assembled) {
             await persistPieceState(session: session)
             let progress = await pm.progress
-            await MainActor.run {
-                if progress >= 1.0 {
-                    self.delegate?.engineDidCompleteTorrent(id: sessionID)
-                } else {
-                    self.delegate?.engineDidUpdateTorrent(id: sessionID)
-                }
+            if progress >= 1.0 {
+                await notifyComplete(id: sessionID)
+            } else {
+                await notifyUpdate(id: sessionID)
             }
             // Request next piece from all connected peers
             for (_, conn) in session.peers {
@@ -292,9 +290,23 @@ public actor TorrentEngine {
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 guard let self else { break }
                 for id in await self.sessions.keys {
-                    await MainActor.run { self.delegate?.engineDidUpdateTorrent(id: id) }
+                    await self.notifyUpdate(id: id)
                 }
             }
+        }
+    }
+
+    private func notifyUpdate(id: UUID) async {
+        let delegate = delegate
+        await MainActor.run {
+            delegate?.engineDidUpdateTorrent(id: id)
+        }
+    }
+
+    private func notifyComplete(id: UUID) async {
+        let delegate = delegate
+        await MainActor.run {
+            delegate?.engineDidCompleteTorrent(id: id)
         }
     }
 
