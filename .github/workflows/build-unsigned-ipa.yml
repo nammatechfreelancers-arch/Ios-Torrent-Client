@@ -27,7 +27,7 @@ jobs:
             "https://github.com/yonaskolb/XcodeGen/releases/download/${XCODEGEN_VERSION}/xcodegen.zip" \
             -o xcodegen.zip
           unzip -q xcodegen.zip -d xcodegen-bin
-          sudo install -m 0755 xcodegen-bin/xcodegen /usr/local/bin/xcodegen
+          sudo bash xcodegen-bin/xcodegen/install.sh
           xcodegen --version
 
       - name: Generate Xcode project
