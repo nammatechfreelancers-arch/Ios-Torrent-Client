@@ -12,6 +12,9 @@ struct NammaTorrentApp: App {
                 RootTabView()
                     .preferredColorScheme(colorScheme)
                     .tint(SettingsManager.shared.settings.accentColor.color)
+                    .onOpenURL { url in
+                        handleIncomingURL(url)
+                    }
             } else {
                 ProgressView("Loading…")
                     .task { await launch() }
@@ -32,6 +35,22 @@ struct NammaTorrentApp: App {
     private func launch() async {
         await AppContainer.shared.bootstrap()
         isReady = true
+    }
+
+    private func handleIncomingURL(_ url: URL) {
+        let urlString = url.absoluteString
+        if urlString.lowercased().hasPrefix("magnet:") {
+            Task {
+                try? await TorrentService.shared.addMagnet(urlString)
+            }
+        } else if url.pathExtension.lowercased() == "torrent" {
+            Task.detached {
+                let accessed = url.startAccessingSecurityScopedResource()
+                defer { if accessed { url.stopAccessingSecurityScopedResource() } }
+                guard let data = try? Data(contentsOf: url) else { return }
+                try? await TorrentService.shared.addTorrentFile(data: data)
+            }
+        }
     }
 
     private var colorScheme: ColorScheme? {

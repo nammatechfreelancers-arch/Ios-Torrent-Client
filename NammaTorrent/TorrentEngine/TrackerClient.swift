@@ -52,24 +52,26 @@ public actor TrackerClient {
         left: Int64,
         event: String = "started"
     ) async throws -> TrackerResponse {
-        guard var components = URLComponents(string: trackerURL) else { throw TrackerError.invalidURL }
+        guard let baseURL = URL(string: trackerURL) else { throw TrackerError.invalidURL }
 
-        let peerIDStr = peerID.map { String(format: "%c", $0) }.joined()
+        // Percent-encode raw bytes for info_hash and peer_id
         let infoHashEscaped = infoHash.map { String(format: "%%%02X", $0) }.joined()
+        let peerIDEscaped = peerID.map { String(format: "%%%02X", $0) }.joined()
 
-        components.percentEncodedQuery = [
+        let queryString = [
             "info_hash=\(infoHashEscaped)",
-            "peer_id=\(peerIDStr.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")",
+            "peer_id=\(peerIDEscaped)",
             "port=\(port)",
             "uploaded=\(uploaded)",
             "downloaded=\(downloaded)",
             "left=\(left)",
             "compact=1",
             "event=\(event)",
-            "numwant=50"
+            "numwant=80"
         ].joined(separator: "&")
 
-        guard let url = components.url else { throw TrackerError.invalidURL }
+        let urlString = baseURL.absoluteString + (baseURL.query == nil ? "?" : "&") + queryString
+        guard let url = URL(string: urlString) else { throw TrackerError.invalidURL }
 
         let (data, response) = try await session.data(from: url)
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {

@@ -111,30 +111,40 @@ public actor TorrentEngine {
         let downloaded = await pm.verifiedCount
         let pieceLen = pm.pieceLength
         let total = pm.totalSize
-        let left = total - Int64(downloaded * pieceLen)
+        let left = total > 0 ? (total - Int64(downloaded * pieceLen)) : Int64.max
+
+        // Filter to HTTP/HTTPS trackers only (UDP not yet implemented)
+        let httpTrackers = trackerURLs.filter { $0.hasPrefix("http") }
 
         // Tracker announce
         Task {
-            for url in trackerURLs {
-                if let response = try? await session.trackerClient.announce(
-                    trackerURL: url,
-                    infoHash: session.infoHash,
-                    downloaded: session.totalDownloaded,
-                    uploaded: session.totalUploaded,
-                    left: left,
-                    event: "started"
-                ) {
-                    let peers = response.peers.map {
-                        TorrentPeer(ip: $0.ip, port: $0.port, source: .tracker)
+            await withTaskGroup(of: Void.self) { group in
+                for url in httpTrackers {
+                    group.addTask {
+                        if let response = try? await session.trackerClient.announce(
+                            trackerURL: url,
+                            infoHash: session.infoHash,
+                            downloaded: session.totalDownloaded,
+                            uploaded: session.totalUploaded,
+                            left: left,
+                            event: "started"
+                        ) {
+                            let peers = response.peers.map {
+                                TorrentPeer(ip: $0.ip, port: $0.port, source: .tracker)
+                            }
+                            await self.connectToPeers(peers, session: session)
+                        }
                     }
-                    await self.connectToPeers(peers, session: session)
                 }
             }
         }
 
-        // DHT
+        // DHT — bootstrap first, then query after a short delay
         Task {
             await session.dhtNode.start()
+            // Wait for bootstrap nodes to respond before querying
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            guard session.isRunning else { return }
             await session.dhtNode.getPeers(infoHash: session.infoHash)
         }
 

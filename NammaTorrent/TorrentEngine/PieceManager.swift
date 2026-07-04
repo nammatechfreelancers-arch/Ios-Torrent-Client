@@ -36,8 +36,11 @@ public actor PieceManager {
     // MARK: - Scheduling
     /// Returns the next piece index to request, using rarest-first strategy.
     public func nextPieceToDownload(availableFromPeer: Set<Int>) -> Int? {
-        let candidates = availableFromPeer.filter { pieceStates[$0] == .missing && !downloadingPieces.contains($0) }
-        return candidates.min() // simplified: sequential for now; rarest-first requires peer bitfield aggregation
+        guard pieceCount > 0 else { return nil }
+        let candidates = availableFromPeer.filter {
+            $0 < pieceCount && pieceStates[$0] == .missing && !downloadingPieces.contains($0)
+        }
+        return candidates.min()
     }
 
     public func markDownloading(_ index: Int) {
@@ -78,6 +81,7 @@ public actor PieceManager {
 
     // MARK: - Helpers
     public func sizeOf(piece index: Int) -> Int {
+        guard pieceCount > 0, index < pieceCount else { return 0 }
         if index == pieceCount - 1 {
             let remainder = Int(totalSize) % pieceLength
             return remainder == 0 ? pieceLength : remainder

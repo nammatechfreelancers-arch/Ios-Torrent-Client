@@ -46,15 +46,18 @@ public struct AddTorrentSheet: View {
             }
             .fileImporter(
                 isPresented: $showFilePicker,
-                allowedContentTypes: [UTType(filenameExtension: "torrent") ?? .data]
+                allowedContentTypes: [UTType(filenameExtension: "torrent") ?? .data, .data]
             ) { result in
-                if case .success(let url) = result,
-                   url.startAccessingSecurityScopedResource(),
-                   let data = try? Data(contentsOf: url) {
-                    url.stopAccessingSecurityScopedResource()
-                    Task {
-                        await vm.addTorrentFile(data)
-                        dismiss()
+                guard case .success(let url) = result else { return }
+                Task.detached {
+                    let accessed = url.startAccessingSecurityScopedResource()
+                    defer { if accessed { url.stopAccessingSecurityScopedResource() } }
+                    guard let data = try? Data(contentsOf: url) else { return }
+                    await MainActor.run {
+                        Task {
+                            await vm.addTorrentFile(data)
+                            dismiss()
+                        }
                     }
                 }
             }
